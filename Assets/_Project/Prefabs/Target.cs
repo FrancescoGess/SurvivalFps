@@ -1,12 +1,15 @@
-using System.Collections;
 using UnityEngine;
 
-// Ora la vita la gestisce Health: Target si occupa solo del feedback visivo e della distruzione.
+using System.Collections;
+ 
+// Feedback visivo al colpo (lampeggio) e, opzionalmente, distruzione alla morte.
+// Sui nemici si disattiva la distruzione: se ne occupa EnemyAI.
 [RequireComponent(typeof(Health))]
 public class Target : MonoBehaviour
 {
     [SerializeField] private Color hitColor = Color.red;
     [SerializeField] private float flashDuration = 0.1f;
+    [SerializeField] private bool destroyOnDeath = true;
 
     private Health health;
     private Renderer targetRenderer;
@@ -40,7 +43,7 @@ public class Target : MonoBehaviour
 
     private void HandleDied()
     {
-        Destroy(gameObject);
+        if (destroyOnDeath) Destroy(gameObject);
     }
 
     private IEnumerator Flash()
