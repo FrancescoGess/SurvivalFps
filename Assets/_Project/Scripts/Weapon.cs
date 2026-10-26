@@ -19,6 +19,13 @@ public class Weapon : MonoBehaviour
     [SerializeField] private int magazineSize = 12;
     [SerializeField] private float reloadTime = 1.5f;
 
+    // Eventi per l'HUD
+    public event System.Action<int, int> OnAmmoChanged;   // munizioni attuali, dimensione caricatore
+    public event System.Action<bool> OnReloadingChanged;  // true all'inizio della ricarica, false alla fine
+
+    public int CurrentAmmo => currentAmmo;
+    public int MagazineSize => magazineSize;
+
     private int currentAmmo;
     private float nextFireTime;
     private bool isReloading;
@@ -26,7 +33,7 @@ public class Weapon : MonoBehaviour
     private void Start()
     {
         currentAmmo = magazineSize;
-        Debug.Log("Munizioni: " + currentAmmo + "/" + magazineSize);
+        OnAmmoChanged?.Invoke(currentAmmo, magazineSize);
     }
 
     private void Update()
@@ -64,7 +71,7 @@ public class Weapon : MonoBehaviour
     {
         nextFireTime = Time.time + 1f / fireRate;
         currentAmmo--;
-        Debug.Log("Munizioni: " + currentAmmo + "/" + magazineSize);
+        OnAmmoChanged?.Invoke(currentAmmo, magazineSize);
 
         // Il raggio parte dal centro della camera e va dritto in avanti
         Ray ray = new Ray(cameraTransform.position, cameraTransform.forward);
@@ -95,10 +102,13 @@ public class Weapon : MonoBehaviour
     private IEnumerator Reload()
     {
         isReloading = true;
-        Debug.Log("Ricarica...");
+        OnReloadingChanged?.Invoke(true);
+
         yield return new WaitForSeconds(reloadTime);
+
         currentAmmo = magazineSize;
         isReloading = false;
-        Debug.Log("Munizioni: " + currentAmmo + "/" + magazineSize);
+        OnReloadingChanged?.Invoke(false);
+        OnAmmoChanged?.Invoke(currentAmmo, magazineSize);
     }
 }
