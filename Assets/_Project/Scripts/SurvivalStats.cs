@@ -14,6 +14,7 @@ public class SurvivalStats : MonoBehaviour
 
     [Header("Stamina")]
     [SerializeField] private float staminaDrainPerSecond = 20f;   // mentre corri
+    [SerializeField] private float jumpStaminaCost = 25f;         // costo di un salto (una tantum)
     [SerializeField] private float staminaRegenPerSecond = 15f;   // quando riposi
     [SerializeField] private float staminaRegenDelay = 1f;        // attesa prima di recuperare
     [SerializeField] private float minStaminaToSprint = 10f;      // dopo l'esaurimento serve almeno questo per correre di nuovo
@@ -31,7 +32,7 @@ public class SurvivalStats : MonoBehaviour
 
     private Health health;
     private FirstPersonController movement;
-    private float lastSprintTime;
+    private float lastStaminaUseTime;
     private bool isExhausted;
 
     private void Awake()
@@ -65,9 +66,9 @@ public class SurvivalStats : MonoBehaviour
         if (sprinting)
         {
             stamina.Change(-staminaDrainPerSecond * dt);
-            lastSprintTime = Time.time;
+            lastStaminaUseTime = Time.time;
         }
-        else if (Time.time - lastSprintTime >= staminaRegenDelay)
+        else if (Time.time - lastStaminaUseTime >= staminaRegenDelay)
         {
             stamina.Change(staminaRegenPerSecond * dt);
         }
@@ -75,6 +76,22 @@ public class SurvivalStats : MonoBehaviour
         // Isteresi: se si esaurisce, non si corre finché non si recupera un minimo
         if (stamina.IsEmpty) isExhausted = true;
         else if (stamina.Current >= minStaminaToSprint) isExhausted = false;
+    }
+
+    // Consuma la stamina in un colpo solo. Restituisce false (senza consumare nulla) se non ce n'è abbastanza.
+    public bool TryUseStamina(float amount)
+    {
+        if (stamina.Current < amount) return false;
+
+        stamina.Change(-amount);
+        lastStaminaUseTime = Time.time; // ritarda il recupero, come per la corsa
+        return true;
+    }
+
+    // Chiamato dal controller quando il giocatore vuole saltare
+    public bool TryJump()
+    {
+        return TryUseStamina(jumpStaminaCost);
     }
 
     public void Eat(float amount)
@@ -93,7 +110,7 @@ public class SurvivalStats : MonoBehaviour
         thirst.Init();
         stamina.Init();
         isExhausted = false;
-        lastSprintTime = -999f;
+        lastStaminaUseTime = -999f;
     }
 
     // Per provare: Play, poi clic destro sul titolo del componente nell'Inspector
