@@ -6,6 +6,7 @@ public class FirstPersonController : MonoBehaviour
 {
     [Header("Riferimenti")]
     [SerializeField] private Transform cameraTransform;
+    [SerializeField] private SurvivalStats survivalStats; // opzionale: se vuoto, lo cerca sul Player
 
     [Header("Movimento")]
     [SerializeField] private float walkSpeed = 4f;
@@ -17,6 +18,9 @@ public class FirstPersonController : MonoBehaviour
     [SerializeField] private float mouseSensitivity = 0.1f;
     [SerializeField] private float maxLookAngle = 85f;
 
+    // Letto da SurvivalStats per consumare la stamina
+    public bool IsSprinting { get; private set; }
+
     private CharacterController controller;
     private float verticalVelocity;
     private float pitch;
@@ -24,11 +28,19 @@ public class FirstPersonController : MonoBehaviour
     private void Awake()
     {
         controller = GetComponent<CharacterController>();
+        if (survivalStats == null) survivalStats = GetComponent<SurvivalStats>();
         LockCursor(true);
+    }
+
+    private void OnDisable()
+    {
+        IsSprinting = false;
     }
 
     private void Update()
     {
+        IsSprinting = false;
+
         Keyboard keyboard = Keyboard.current;
         Mouse mouse = Mouse.current;
         if (keyboard == null || mouse == null) return;
@@ -65,7 +77,13 @@ public class FirstPersonController : MonoBehaviour
         Vector3 direction = transform.right * x + transform.forward * z;
         direction = Vector3.ClampMagnitude(direction, 1f); // evita di andare più veloce in diagonale
 
-        float speed = keyboard.leftShiftKey.isPressed ? sprintSpeed : walkSpeed;
+        // Si corre solo se si tiene Shift, ci si sta muovendo e la stamina lo permette
+        bool isMoving = direction.sqrMagnitude > 0.01f;
+        bool wantsToSprint = keyboard.leftShiftKey.isPressed && isMoving;
+        bool staminaAllows = survivalStats == null || survivalStats.CanSprint;
+
+        IsSprinting = wantsToSprint && staminaAllows;
+        float speed = IsSprinting ? sprintSpeed : walkSpeed;
 
         // Gravità e salto
         if (controller.isGrounded && verticalVelocity < 0f)

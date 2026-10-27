@@ -12,6 +12,7 @@ public class PlayerRespawn : MonoBehaviour
     private CharacterController controller;
     private FirstPersonController movement;
     private Weapon weapon;
+    private SurvivalStats survivalStats;
     private Vector3 startPosition;
     private Quaternion startRotation;
 
@@ -21,6 +22,7 @@ public class PlayerRespawn : MonoBehaviour
         controller = GetComponent<CharacterController>();
         movement = GetComponent<FirstPersonController>();
         weapon = GetComponent<Weapon>();
+        survivalStats = GetComponent<SurvivalStats>();
 
         startPosition = transform.position;
         startRotation = transform.rotation;
@@ -61,6 +63,7 @@ public class PlayerRespawn : MonoBehaviour
         controller.enabled = true;
 
         health.ResetHealth();
+        if (survivalStats != null) survivalStats.ResetStats();
 
         if (movement != null) movement.enabled = true;
         if (weapon != null) weapon.enabled = true;
